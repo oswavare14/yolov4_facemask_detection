@@ -11,7 +11,9 @@ modelConfiguration = 'data/custom-yolov4-detector.cfg'
 modelWeights = 'data/custom-yolov4-detector_best.weights'
 
 # configura los networks
+# Esto se usa para cargar los modelos entrenados usando el marco DarkNet. Necesitamos proporcionar dos argumentos aquí también. Una de las rutas a los pesos del modelo y la otra es la ruta al archivo de configuración del modelo 
 net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
+# Configuracion de backend y targeta cpu
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -51,14 +53,14 @@ def main(cap,flag):
     if flag == 0:
         while True:
             success, img = cap.read()
-
+            #blob prepara la imagen en el formato correcto para introducirla en el modelo 
             blob = cv2.dnn.blobFromImage(img, 1 / 255, (whT, whT), [0, 0, 0], 1, crop=False)
 
             net.setInput(blob)
 
             layerNames = net.getLayerNames()
             outputNames = [layerNames[i - 1] for i in net.getUnconnectedOutLayers()]
-
+            # forwward sirve para propagar hacia adelante el blob a través del modelo, lo que nos da todas las salidas.
             outputs = net.forward(outputNames)
             findObjects(outputs, img)
             cv2.imshow('Prediction', img)
