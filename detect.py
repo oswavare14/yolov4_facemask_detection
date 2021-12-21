@@ -1,9 +1,9 @@
-import cv2
 import numpy as np
 import sys
+import cv2
 
 #global variables and global enviroment
-classes = ['mask', 'no_mask']
+classes = ['CON MASCARILLA', 'SIN MASCARILLA']
 whT = 320
 
 # import del .cfg .weights ya entrenados en el darknet
@@ -26,7 +26,6 @@ def findObjects(outputs,img):
             scores = det[5:]
             classId = np.argmax(scores)
             confidence = scores[classId]
-
             if confidence > 0.5:
                 w,h = int(det[2]*wT),int(det[3]*hT)
                 x,y = int((det[0]*wT)-w/2),int((det[1]*hT)-h/2)
@@ -39,9 +38,14 @@ def findObjects(outputs,img):
     for i in indices:
         box = bbox[i]
         x,y,w,h = box[0],box[1],box[2],box[3]
-        cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,68),2)
-        cv2.putText(img,f'{classes[classIds[i]]} {int(confs[i]*100)}%',
+        if(classIds[i]==0):
+            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,68),3)
+            cv2.putText(img,f'{classes[classIds[i]]} {int(confs[i]*100)}%',
                     (x,y-10),cv2.FONT_ITALIC,0.6,(0,255,68),2)
+        else:
+            cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),3)
+            cv2.putText(img,f'{classes[classIds[i]]} {int(confs[i]*100)}%',
+                        (x,y-10),cv2.FONT_ITALIC,0.6,(0,0,255),2)
 
 def main(cap,flag):
     if flag == 0:
@@ -49,6 +53,7 @@ def main(cap,flag):
             success, img = cap.read()
 
             blob = cv2.dnn.blobFromImage(img, 1 / 255, (whT, whT), [0, 0, 0], 1, crop=False)
+
             net.setInput(blob)
 
             layerNames = net.getLayerNames()
@@ -56,7 +61,6 @@ def main(cap,flag):
 
             outputs = net.forward(outputNames)
             findObjects(outputs, img)
-
             cv2.imshow('Prediction', img)
             if cv2.waitKey(1) & 0xFF==ord('q'):
                 break
@@ -90,7 +94,7 @@ def commands():
                 cap = cv2.imread(sys.argv[2])
                 flag = 1
         except Exception:
-            print("No image path given")
+            print("Tiene que brindar el path de la imagen")
             exit()
     elif sys.argv[1] == '--video':
         try:
@@ -98,7 +102,7 @@ def commands():
                 cap = cv2.VideoCapture(sys.argv[2])
 
         except Exception:
-            print("No video path given")
+            print("Tiene que brindar el path del video")
             exit()
     elif sys.argv[1] == '--webcam':
         cap = cv2.VideoCapture(0)
